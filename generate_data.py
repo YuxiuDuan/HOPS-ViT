@@ -355,21 +355,6 @@ def generate_data_mulitTarget(args, pred=None, attnmap_pred=None):
     batch_size = len(pred)
     print('Building model ...')
     p_model = build_model(model_zoo[args.model])
-    # --- 关键修改：传入 num_classes 和 checkpoint_path ---
-
-    # 1. 确定类别数 (CIFAR-100)
-    # 您的微调模型是在 CIFAR-100 (100类) 上训练的。
-    # num_classes = 100
-    #
-    # # 2. 调用 build_model，传入所有参数
-    # p_model = build_model(
-    #     model_zoo[args.model],
-    #     Pretrained=False,  # 如果提供了 checkpoint，则应该为 False
-    #     num_classes=num_classes,
-    #     checkpoint_path=args.checkpoint  # 从 generate.py 传入的参数
-    # )
-
-    # ----------------------------------------------------
     p_model = p_model.cuda()
     p_model.eval()
 
@@ -572,11 +557,6 @@ def generate_data_mulitTarget(args, pred=None, attnmap_pred=None):
     criterion = nn.CrossEntropyLoss()
     KL_Loss = nn.KLDivLoss(reduction='batchmean')
     soft_criterion = CrossEntropyLossSoft(reduction='none')
-    # radius = [[0.2, 0.4, 0.1],
-    #           [0.3, 0.5, 0.2],
-    #           [0.4, 0.6, 0.3],
-    #           [0.5, 0.7, 0.4],
-    #           [0.6, 1, 0]]
     radius = [[0.3, 0.5, 0.2],[0.6, 1, 0]]
     loss_history = {
         'total_loss': [],
@@ -588,7 +568,6 @@ def generate_data_mulitTarget(args, pred=None, attnmap_pred=None):
         'loss_kl': [],  # 频率 KL 散度
         'loss_hard': []  # 频率语义硬损失
     }
-    # radius = [[0.15, 0.35, 0.1], [0.4, 0.7, 0.05]]
     # Train for two epochs
 
     for lr_it in range(2):
@@ -639,12 +618,6 @@ def generate_data_mulitTarget(args, pred=None, attnmap_pred=None):
             output = p_model(img_jit)
             output_align = p_model(img_jit_align)
 
-            # if itr < 300:
-            #     loss_kl = torch.zeros(1).cuda()
-            # else:
-            #     teacher_output = p_model(img_jit_l).clone().softmax(dim=-1).detach()
-            #     student_output = output_align.log_softmax(dim=-1)
-            #     loss_kl = KL_Loss(student_output, teacher_output)
             T = 2.0  # 温度系数，通常在 1.5-3.0 之间
             teacher_output = (p_model(img_jit_l) / T).softmax(dim=-1).detach()
             student_output = (output_align / T).log_softmax(dim=-1)
@@ -656,10 +629,6 @@ def generate_data_mulitTarget(args, pred=None, attnmap_pred=None):
             # loss_hard = criterion(output_align, pred)
             loss_hard = 0.5 * loss_align_semantic + 0.5 * loss_align_consistency
 
-            # if itr < 300:
-            #     loss_align = (torch.mean(loss_hard)) / 1
-            # else:
-            #     loss_align = (torch.mean(loss_hard * 0.5 + loss_kl * 0.5)) / 1
             loss_align = args.align_weight * (torch.mean(loss_hard  + loss_kl )) / 1
             # print("loss_hard: ", loss_hard)
 
@@ -705,23 +674,13 @@ def generate_data_mulitTarget(args, pred=None, attnmap_pred=None):
                     if itr_hook > len(attnhooks) // 2:
                         loss_attnmaps += ((itr_hook + 1) / 12 * 1.0) * \
                                          F.mse_loss(attnmap, target, reduction='mean').float()
-                    # attnmap = attention[:, :, 0, :]  # [B,H,N,N]->[B,H,N]
-                    # if itr_hook > len(attnhooks) // 2:
-                    #     # 从浅层到深层约束逐渐加强，所以浅层的损失权重系数更低，直到最后系数为1，要求attnmap与target完全吻合
-                    #     loss_attnmaps += ((itr_hook + 1) / 12 * 1.0) * F.mse_loss(attnmap,
-                    #                                                               attnmap_pred[:, itr_hook, :, :],
-                    #                                                               reduction='mean').float()
+                   
 
             loss_oh = coe_oh * loss_oh
             loss_soft = coe_sf * loss_soft
             loss_attnmaps = coe_attn * loss_attnmaps
             loss_tv = 0.05 * loss_tv
             total_loss = loss_oh + loss_tv + loss_soft + loss_attnmaps + loss_align
-            # print('loss_oh:', loss_oh, 'loss_soft:', loss_soft)
-            # print('loss_attnmaps:', loss_attnmaps)
-            # print('loss_tv:', loss_tv)
-            # print('loss_align:', loss_align)
-            # vit_s 2.2
 
 
             if itr % 20 == 0:
@@ -768,23 +727,12 @@ def generate_data_mulitTarget(args, pred=None, attnmap_pred=None):
 
                         loss_tv_search = torch.norm(get_image_prior_losses(img_jit + delta) - var_pred)
 
-                        # 组合损失
-                        # 注意：这里的权重 100000 非常大，会主导 delta 的更新方向
-                        # print('loss_ce:',loss_ce)
-                        # print('loss_feat:', loss_feat)
-                        # print('loss_kl:', loss_kl)
-                        # print('loss_tv_search:', loss_tv_search)
+                       
                         if i == 0:
                             current_adv_loss = loss_ce + loss_kl + 10 * loss_feat + 0.05 * loss_tv_search
                         else:
                             current_adv_loss = (3 * loss_ce + loss_kl + 10 * loss_feat + 0.05 * loss_tv_search) / 2
 
-                        #     vit 3 * loss_ce + 0.01 * loss_kl + 10 * loss_feat + 0.05 * loss_tv_searc
-                        # vit_small 3 * loss_ce +  0.1 * loss_kl + 10 * loss_feat + 0.05 * loss_tv_search
-                        # swin 3 * loss_ce + 0.1 * loss_kl + 100 * loss_feat + 0.05 * loss_tv_search
-                        # swin base loss_ce + loss_kl + 100 * loss_feat + 0.05 * loss_tv_search
-                        # deit 3 * loss_ce + 0.01 * loss_kl + 10 * loss_feat + 0.05 * loss_tv_search
-                        # swin small loss_kl + 1000 * loss_feat
 
                         # 3. 执行 backward。
                         # 注意：这里只更新 delta，不更新 img。
@@ -799,8 +747,6 @@ def generate_data_mulitTarget(args, pred=None, attnmap_pred=None):
                             # print(delta.data)
 
 
-                    # 4. 最终应用寻找出来的 delta
-                    # 在离开 if itr < 300 之后，img_jit = img_jit + delta.detach() 参与外层主 loss 计算
 
                 #     # 将高频信息添加到图像中
                 img_jit_adv = (img_jit + delta).detach().requires_grad_(True)
@@ -857,26 +803,10 @@ def generate_data_mulitTarget(args, pred=None, attnmap_pred=None):
                 total_loss_adv = loss_oh_adv + loss_tv_adv + loss_soft_adv + loss_attnmaps_adv
                 # 反向传播
                 total_loss_adv.backward()
-                # loss_history['total_loss'].append(get_val(total_loss_adv))
-                # loss_history['loss_oh'].append(get_val(loss_oh_adv))
-                # loss_history['loss_soft'].append(get_val(loss_soft_adv))
-                # loss_history['loss_tv'].append(get_val(loss_tv_adv))
-                # loss_history['loss_attnmaps'].append(get_val(loss_attnmaps_adv))
-                # loss_history['loss_align'].append(get_val(loss_align))
-                # loss_history['loss_kl'].append(get_val(loss_kl))
-                # loss_history['loss_hard'].append(get_val(loss_hard))
 
             else:
                 # 正常训练阶段
                 total_loss.backward()
-                # loss_history['total_loss'].append(get_val(total_loss))
-                # loss_history['loss_oh'].append(get_val(loss_oh))
-                # loss_history['loss_soft'].append(get_val(loss_soft))
-                # loss_history['loss_tv'].append(get_val(loss_tv))
-                # loss_history['loss_attnmaps'].append(get_val(loss_attnmaps))
-                # loss_history['loss_align'].append(get_val(loss_align))
-                # loss_history['loss_kl'].append(get_val(loss_kl))
-                # loss_history['loss_hard'].append(get_val(loss_hard))
 
             # Do image update
 
@@ -949,17 +879,7 @@ def generate_data_mulitTarget(args, pred=None, attnmap_pred=None):
 
                     loss_tv_cropped = torch.norm(get_image_prior_losses(img_jit_cropped) - var_pred_cropped)
 
-                    # for itr_hook in range(len(attnhooks)):
-                    #     if 'swin' in args.model:
-                    #         attention = attnhooks[itr_hook].feature
-                    #         shapes = attnhooks[itr_hook].feature.shape
-                    #         attnmap = attention[:, :, :, :]
-                    #         target = attnmap_pred_cropped[itr_hook].reshape(shapes[0], shapes[1], -1)
-                    #         target = target.unsqueeze(2)
-                    #         if itr_hook > len(attnhooks) // 2:
-                    #             loss_attnmaps += ((itr_hook + 1) / len(attnhooks) * 1.0) * \
-                    #                              F.mse_loss(attnmap, target, reduction='mean').float()
-                    # --- 找到代码中约 870-880 行处理 cropped 数据的逻辑 ---
+                  
                     for itr_hook in range(len(attnhooks)):
                         if 'swin' in args.model:
                             attention = attnhooks[itr_hook].feature
