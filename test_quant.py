@@ -467,32 +467,7 @@ def accuracy(output, target, topk=(1,)):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser('I&S-ViT', parents=[get_args_parser()])
     args = parser.parse_args()
-    # names = [
-    #     "vit_tiny",
-    #     "vit_small",
-    #     "vit_base",
 
-    #     "deit_tiny",
-
-    #     "swin_tiny",
-    #     "swin_small",
-    #     "swin_base"
-    #     ]
-    bits = [6,5, 4]
-    weight_list = [ 2.4]
-    # for name in names:
-    #     args.model = name
-    for weight in weight_list:
-        # 拼接字符串
-        args.fake_path = f'align--{weight}-coe_oh-0-coe_sf-1.0-coe_attn-100.0--bs32_data.pickle'
-        args.box_path = f'align--{weight}-coe_oh-0-coe_sf-1.0-coe_attn-100.0--bs32_boxes.pickle'
-        args.softtagets_path = f'align--{weight}-coe_oh-0-coe_sf-1.0-coe_attn-100.0--bs32_softtargets.pickle'
-        for bit in bits:
-            args.w_bits = bit
-            args.a_bits = bit
-
-            print(f"Testing model: {args.model}, w_bits: {args.w_bits}, a_bits: {args.a_bits}")
-            main()
-    # main()
+    main()
 
 
