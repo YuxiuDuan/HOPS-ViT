@@ -1,0 +1,22 @@
+name: dyx_cuda11.8_torch2.0.0
+channels:
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge/
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/
+  - defaults
+dependencies:
+  - python=3.8
+  - accimage
+  - cudatoolkit==11.3.1
+  - pytorch==1.10.1
+  - torchaudio==0.10.1
+  - torchvision==0.11.2
+  - matplotlib
+  - asttokens==2.4.1
+  - backcall==0.2.0
+  - beautifulsoup4==4.12.3
+  - bleach==6.1.0
+  - blinker
+  - wandb
+  - setuptools==58.0.4
+prefix: /home/ghw/anaconda3/envs/dyx_cuda11.8_torch2.0.0
