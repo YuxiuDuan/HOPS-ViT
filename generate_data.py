@@ -58,7 +58,7 @@ def attnmap_targets(args):
         return multivariate_normal(mean, covariance)
 
     def single_attnmap():
-        # rvnum是高斯数，也就是attnmap中有多少个关注中心，1-5个之间进行随机
+        # rvnum is a Gaussian number, which means how many attention centers are in attnmap, randomly between 1-5
         # rvnum_candi = [1,2,3,4,5]
         rvnum_candi = [1]
         rvnum = rvnum_candi[random.randint(0, len(rvnum_candi) - 1)]
@@ -67,7 +67,6 @@ def attnmap_targets(args):
         for i in range(rvnum):
             rv.append(single_rv())
 
-        # 高斯图的宽度，保证attnmap中不同目标的热力图大小不同
         width_candi = [4, 6, 8]
         width = width_candi[random.randint(0, len(width_candi) - 1)]
 
@@ -81,7 +80,6 @@ def attnmap_targets(args):
             values.append(rv[i].pdf(pos))
         values = np.array(values)
 
-        # 将多个高斯图的结果混合得到一个混合高斯，这里只需取最大值即可
         values_mix = np.max(values, axis=0) + 1e-9  # 1e-9 is set to avoid division by 0
         values_mix = values_mix / np.max(values_mix)
 
@@ -110,9 +108,9 @@ def attnmap_targets(args):
     rvnums = []
     # for _ in range(args.batch_size):
     for _ in range(args.batch_size * head_num):
-        value_cls = torch.rand(1)  # cls token的值
-        vaule_patch, rvnum = single_attnmap()  # 每个 head 一个随机的 attnmap target
-        vaule_patch = (vaule_patch / vaule_patch.sum()) * (1 - value_cls)  # 保证cls token与其余token相加和为1
+        value_cls = torch.rand(1)  
+        vaule_patch, rvnum = single_attnmap()  
+        vaule_patch = (vaule_patch / vaule_patch.sum()) * (1 - value_cls)  
 
         # assert 1.0 == value_cls.item()+vaule_patch.sum().item()
         logging.info('rvnum={}, cls={}, patch={}, sum={}'.format(rvnum, value_cls.item(), vaule_patch.sum().item(),
@@ -148,7 +146,7 @@ def attnmap_targets_fined(args, batchsize=None):
                 continue
 
     def single_attnmap():
-        # rvnum是高斯数，也就是attnmap中有多少个关注中心，1-5个之间进行随机
+      
         rvnum_candi = [1, 2, 3, 4, 5]
         rvnum = rvnum_candi[np.random.randint(0, len(rvnum_candi) - 1)]
 
@@ -156,7 +154,7 @@ def attnmap_targets_fined(args, batchsize=None):
         for i in range(rvnum):
             rv.append(single_rv())
 
-        # 高斯图的宽度，保证attnmap中不同目标的热力图大小不同
+       
         width_candi = [4, 6, 8]
         width = width_candi[np.random.randint(0, len(width_candi) - 1)]
 
@@ -169,8 +167,6 @@ def attnmap_targets_fined(args, batchsize=None):
         for i in range(rvnum):
             values.append(rv[i].pdf(pos))
         values = np.array(values)
-
-        # 将多个高斯图的结果混合得到一个混合高斯，这里只需取最大值即可
         values_mix = np.max(values, axis=0) + 1e-9  # 1e-9 is set to avoid division by 0
         values_mix = values_mix / np.max(values_mix)
 
@@ -187,7 +183,7 @@ def attnmap_targets_fined(args, batchsize=None):
         return values_softmax, rvnum
 
     def single_attnmap_swin():
-        # rvnum是高斯数，也就是attnmap中有多少个关注中心，1-5个之间进行随机
+      
         rvnum_candi = [1]  # [1, 2, 3, 4, 5]
         rvnum = rvnum_candi[np.random.randint(0, len(rvnum_candi))]
 
@@ -195,7 +191,7 @@ def attnmap_targets_fined(args, batchsize=None):
         for i in range(rvnum):
             rv.append(single_rv())
 
-        # 高斯图的宽度，保证attnmap中不同目标的热力图大小不同
+     
         width_candi = [1, 2, 3]
         width = width_candi[np.random.randint(0, len(width_candi) - 1)]
 
@@ -209,7 +205,7 @@ def attnmap_targets_fined(args, batchsize=None):
             values.append(rv[i].pdf(pos))
         values = np.array(values)
 
-        # 将多个高斯图的结果混合得到一个混合高斯，这里只需取最大值即可
+     
         values_mix = np.max(values, axis=0) + 1e-9  # 1e-9 is set to avoid division by 0
         values_mix = values_mix / np.max(values_mix)
 
@@ -240,7 +236,7 @@ def attnmap_targets_fined(args, batchsize=None):
     elif args.model == 'vit_base':
         head_num = 12
         layers = 12
-    elif args.model == 'vit_tiny':  # 添加这一行
+    elif args.model == 'vit_tiny': 
         head_num = 3
         layers = 12
     elif args.model == 'swin_tiny':
@@ -375,14 +371,14 @@ def generate_data_mulitTarget(args, pred=None, attnmap_pred=None):
         softtagets_softlabel = []
         softboxes = []
         for i in range(len(pred)):
-            label = torch.rand(SOFT_LABEL_CLASSES)  # 初始时所有类别的概率为0-1随机
-            cls_nums = random.randint(1, 5)  # 随机1-3个类别调高概率，即随机1-3个目标
+            label = torch.rand(SOFT_LABEL_CLASSES)  
+            cls_nums = random.randint(1, 5)  
             cls_ids = [pred[i].cpu()]
-            label[pred[i].cpu()] = random.randint(5, 10)  # 将正确标签类别的预测概率调高
+            label[pred[i].cpu()] = random.randint(5, 10) 
             softtagets.append([])
             softtagets[-1].append(pred[i].cpu())
 
-            while len(cls_ids) < cls_nums:  # 继续随机抽其他类别调高概率
+            while len(cls_ids) < cls_nums: 
                 cls_id = torch.randint(0, SOFT_LABEL_CLASSES - 1, ())
                 if cls_id not in cls_ids:
                     cls_ids.append(cls_id)
@@ -496,7 +492,7 @@ def generate_data_mulitTarget(args, pred=None, attnmap_pred=None):
 
     optimizer = optim.Adam([img], lr=args.lr, betas=[0.5, 0.9], eps=1e-8)
     # Set pseudo labels
-    # var_pred是图像先验损失的target，bs32时是2500到3000
+  
     var_pred = random.uniform(2500 * batch_size / 32, 3000 * batch_size / 32)  # for batch_size 32
 
     if args.softlabel:
@@ -536,7 +532,7 @@ def generate_data_mulitTarget(args, pred=None, attnmap_pred=None):
             attnmap_pred, rvnums = attnmap_targets_fined(args=args, batchsize=batch_size)
             attnmap_pred = attnmap_pred.to('cuda')
         if args.softlabel:
-            # 【修改】确保有 crop 数量才生成 target
+           
             if cropped_number > 0:
                 if 'swin' in args.model:
                     attnmap_pred_cropped, rvnums_cropped = attnmap_targets_fined(args=args, batchsize=cropped_number)
@@ -546,12 +542,7 @@ def generate_data_mulitTarget(args, pred=None, attnmap_pred=None):
             else:
                 attnmap_pred_cropped = None
                 rvnums_cropped = []
-        # if args.softlabel:
-        #     if 'swin' in args.model:
-        #         attnmap_pred_cropped, rvnums_cropped = attnmap_targets_fined(args=args, batchsize=cropped_number)
-        #     else:
-        #         attnmap_pred_cropped, rvnums_cropped = attnmap_targets_fined(args=args, batchsize=cropped_number)
-        #         attnmap_pred_cropped = attnmap_pred_cropped.to('cuda')
+
 
     # set criterion
     criterion = nn.CrossEntropyLoss()
@@ -560,13 +551,13 @@ def generate_data_mulitTarget(args, pred=None, attnmap_pred=None):
     radius = [[0.3, 0.5, 0.2],[0.6, 1, 0]]
     loss_history = {
         'total_loss': [],
-        'loss_oh': [],  # 分类损失 (One-hot)
-        'loss_soft': [],  # 软标签损失 (SL)
-        'loss_tv': [],  # 图像先验损失 (TV)
-        'loss_attnmaps': [],  # 注意力对齐损失 (APA)
-        'loss_align': [],  # 频率对齐总损失 (Align)
-        'loss_kl': [],  # 频率 KL 散度
-        'loss_hard': []  # 频率语义硬损失
+        'loss_oh': [],  #  (One-hot)
+        'loss_soft': [], 
+        'loss_tv': [], 
+        'loss_attnmaps': [],  
+        'loss_align': [],  # Frequency Alignment Total Loss (Align)
+        'loss_kl': [],  # Frequency KL divergence
+        'loss_hard': []  
     }
     # Train for two epochs
 
@@ -582,7 +573,7 @@ def generate_data_mulitTarget(args, pred=None, attnmap_pred=None):
         # lim = int(112 * 0.3 * (lr_it / 2))
 
         lr_scheduler = lr_cosine_policy(args.lr, 100, iterations_per_layer)
-        # 过滤出高低频信息
+        # Filter out high and low frequency information
         lmask, hmask = fftmask(radius[lr_it][0], radius[lr_it][1], radius[lr_it][2])
 
         for itr in range(iterations_per_layer):
@@ -618,14 +609,14 @@ def generate_data_mulitTarget(args, pred=None, attnmap_pred=None):
             output = p_model(img_jit)
             output_align = p_model(img_jit_align)
 
-            T = 2.0  # 温度系数，通常在 1.5-3.0 之间
+            T = 2.0  # Temperature coefficient
             teacher_output = (p_model(img_jit_l) / T).softmax(dim=-1).detach()
             student_output = (output_align / T).log_softmax(dim=-1)
-            loss_kl = KL_Loss(student_output, teacher_output) * (T**2) # 乘以 T^2 保持梯度量级
+            loss_kl = KL_Loss(student_output, teacher_output) * (T**2) 
 
 
-            loss_align_semantic = criterion(output_align, pred)  # 确保高频强化后的图依然指向正确类别
-            loss_align_consistency = F.mse_loss(output_align, output.detach())  # 确保与原图逻辑一致
+            loss_align_semantic = criterion(output_align, pred)  # Make sure that the high-frequency enhanced plots still point to the correct class
+            loss_align_consistency = F.mse_loss(output_align, output.detach())  # Ensure logical consistency with the original image
             # loss_hard = criterion(output_align, pred)
             loss_hard = 0.5 * loss_align_semantic + 0.5 * loss_align_consistency
 
@@ -660,7 +651,6 @@ def generate_data_mulitTarget(args, pred=None, attnmap_pred=None):
                     target = attnmap_pred[itr_hook].reshape(shapes[0], shapes[1], 1, 49)
                     target = target.expand(-1, -1, shapes[2], -1)
 
-                    # 从浅层到深层约束逐渐加强，所以浅层的损失权重系数更低，直到最后系数为1，要求attnmap与target完全吻合
                     if itr_hook > len(attnhooks) // 2:
                         loss_attnmaps += ((itr_hook + 1) / len(attnhooks) * 1.0) * \
                                          F.mse_loss(attnmap, target, reduction='mean').float()
@@ -690,26 +680,25 @@ def generate_data_mulitTarget(args, pred=None, attnmap_pred=None):
                         lr_it + 1, itr, iterations_per_layer, total_loss, loss_oh, loss_tv, loss_soft,
                         loss_attnmaps))
                 if itr < 300:
-                    # 1. 这里的 delta 必须脱离 img_jit 的梯度链，单独作为一个可学习参数
+                  
                     delta = torch.zeros_like(img_jit).detach().requires_grad_(True)
 
-                    # 定义 delta 优化器（比手动用 torch.sign 更新更稳定）
+                   
                     delta_optimizer = optim.Adam([delta], lr=1e-3)
 
-                    # 2. 预先获取 clean 特征（减少重复计算）
+                  
                     with torch.no_grad():
                         _ = p_model(img_jit)
                         feat_cle = p_model.features['norm'].detach()
                         output_cle = p_model(img_jit).detach()
                         output_cle_prob = F.softmax(output_cle, dim=1)
 
-                    # 内部小循环：寻找高频扰动
+                    # Finding high frequency signals
                     for i in range(3):
                         p_model.zero_grad()
                         if delta.grad is not None:
                             delta.grad = None
 
-                        # 对抗前向
                         output_adv = p_model(img_jit + delta)
                         feat_adv = p_model.features.get('norm', None)
 
@@ -717,11 +706,9 @@ def generate_data_mulitTarget(args, pred=None, attnmap_pred=None):
                             print("Error: 'norm' layer not found in features!")
                             break
 
-                        # 计算各种 Loss
                         loss_ce = criterion(output_adv, pred)
                         loss_feat = F.mse_loss(feat_adv, feat_cle)
 
-                        # 修复 loss_kl 未定义问题 (使用对称 KL 散度)
                         output_adv_logprob = F.log_softmax(output_adv, dim=1)
                         loss_kl = F.kl_div(output_adv_logprob, output_cle_prob, reduction='batchmean')
 
@@ -734,27 +721,24 @@ def generate_data_mulitTarget(args, pred=None, attnmap_pred=None):
                             current_adv_loss = (3 * loss_ce + loss_kl + 10 * loss_feat + 0.05 * loss_tv_search) / 2
 
 
-                        # 3. 执行 backward。
-                        # 注意：这里只更新 delta，不更新 img。
+                        # Here only delta is updated, not img
                         current_adv_loss.backward()
 
-                        # 更新 delta
                         with torch.no_grad():
                             grad_sign = delta.grad.sign()
                             delta.data = delta.data + 1e-3 * grad_sign
-                            # 限制扰动范围 (L_inf norm)
                             delta.data = torch.clamp(delta.data, -0.00784314, 0.00784314)
                             # print(delta.data)
 
 
 
-                #     # 将高频信息添加到图像中
+                #     # High-frequency information is added to the image
                 img_jit_adv = (img_jit + delta).detach().requires_grad_(True)
 
                 output_adv = p_model(img_jit_adv)
                 loss_ce_adv = criterion(output_adv, pred)
 
-                # 重新计算总损失，包含高频信息的影响
+                # The total loss is recalculated, including the effect of high-frequency information
                 if args.softlabel:
                     loss_oh_adv = 0
                     loss_soft_adv = torch.mean(soft_criterion(output_adv, softlabel)) / 1
@@ -764,7 +748,6 @@ def generate_data_mulitTarget(args, pred=None, attnmap_pred=None):
 
                 loss_tv_adv = torch.norm(get_image_prior_losses(img_jit_adv) - var_pred)
 
-                # 重新计算注意力图损失
                 loss_attnmaps_adv = 0
                 for itr_hook in range(len(attnhooks)):
                     if 'swin' in args.model:
@@ -773,16 +756,15 @@ def generate_data_mulitTarget(args, pred=None, attnmap_pred=None):
                         attnmap = attention[:, :, :, :]
                         # target = attnmap_pred[itr_hook].reshape(shapes[0], shapes[1], -1, 49)
                         target = attnmap_pred[itr_hook].reshape(shapes[0], shapes[1], 1, 49)
-                        target = target.expand(-1, -1, shapes[2], -1)  # 显式扩展以匹配 Query 维度
+                        target = target.expand(-1, -1, shapes[2], -1) 
                         if itr_hook > len(attnhooks) // 2:
                             loss_attnmaps_adv += ((itr_hook + 1) / len(attnhooks) * 1.0) * \
                                                  F.mse_loss(attnmap, target, reduction='mean').float()
                     else:
                         attention = attnhooks[itr_hook].feature  # [B, H, 197, 197]
-                        # 使用 0:1 保持维度，结果为 [B, H, 1, 197]
+  
                         attnmap = attention[:, :, 0:1, :]
 
-                        # 确保 target 也是 [B, H, 1, 197]
                         target = attnmap_pred[:, itr_hook, :, :].reshape(attnmap.shape)
 
                         if itr_hook > len(attnhooks) // 2:
@@ -795,17 +777,15 @@ def generate_data_mulitTarget(args, pred=None, attnmap_pred=None):
                         #                          F.mse_loss(attnmap, attnmap_pred[:, itr_hook, :, :],
                         #                                     reduction='mean').float()
 
-                # 组合最终损失
                 loss_oh_adv = coe_oh * loss_oh_adv
                 loss_soft_adv = coe_sf * loss_soft_adv
                 loss_attnmaps_adv = coe_attn * loss_attnmaps_adv
                 loss_tv_adv = 0.05 * loss_tv_adv
                 total_loss_adv = loss_oh_adv + loss_tv_adv + loss_soft_adv + loss_attnmaps_adv
-                # 反向传播
                 total_loss_adv.backward()
 
             else:
-                # 正常训练阶段
+                # Normal training phase
                 total_loss.backward()
 
             # Do image update
@@ -841,10 +821,8 @@ def generate_data_mulitTarget(args, pred=None, attnmap_pred=None):
                         left = box[1]
                         box_height = box[2]
                         box_width = box[3]
-                        # 确保裁剪大小不大于大box的大小
                         crop_width = np.random.randint(max(box_width - 30, 10), box_width - 1)
                         crop_height = np.random.randint(max(box_height - 30, 10), box_height - 1)
-                        # 随机选择小box的起点
                         crop_top = np.random.randint(top, top + box_height - crop_height)
                         crop_left = np.random.randint(left, left + box_width - crop_width)
 
@@ -854,7 +832,6 @@ def generate_data_mulitTarget(args, pred=None, attnmap_pred=None):
                         img_cropped_label.append(cropped_label)
                         softlabel_cropped.append(cropped_softlabel)
 
-               # 【修改】添加非空判断，将后续的整个 Crop 处理逻辑包裹起来
                 if len(img_cropped) > 0:
                     img_cropped_label = torch.stack(img_cropped_label).cuda()
                     softlabel_cropped = torch.stack(softlabel_cropped).cuda()
@@ -886,13 +863,11 @@ def generate_data_mulitTarget(args, pred=None, attnmap_pred=None):
                             shapes = attention.shape  # [B_cropped, H, 49, 49]
                             attnmap = attention
 
-                            # 显式 reshape 并 expand
-                            # 将 target 从 [B, H, 49] 变为 [B, H, 49, 49]
                             target = attnmap_pred_cropped[itr_hook].reshape(shapes[0], shapes[1], 1, 49)
                             target = target.expand(-1, -1, shapes[2], -1)
 
                             if itr_hook > len(attnhooks) // 2:
-                                # 注意：这里修正原代码中可能的 loss 累加变量名错误（确保是 loss_attnmaps_cropped）
+          
                                 loss_attnmaps_cropped += ((itr_hook + 1) / len(attnhooks) * 1.0) * \
                                                          F.mse_loss(attnmap, target, reduction='mean').float()
                         else:
@@ -924,7 +899,6 @@ def generate_data_mulitTarget(args, pred=None, attnmap_pred=None):
                     optimizer.step()
                 
                 else:
-                    # 如果列表为空（本轮没有产生 crop 数据），则跳过针对 cropped 的更新
                     pass
 
             # Clip color outliers
@@ -937,7 +911,6 @@ def generate_data_mulitTarget(args, pred=None, attnmap_pred=None):
 
 class AttentionMap:
     def __init__(self, module, batchsize=0, cropped_number=0):
-        # 只注册 forward hook，因为我们只需要提取特征图计算 Loss
         self.hook = module.register_forward_hook(self.hook_fn)
         self.batchsize = batchsize
         self.cropped_number = cropped_number
